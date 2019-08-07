@@ -17,7 +17,9 @@
  */
 
 package org.wildfly.security.script.engine;
-import org.wildfly.security.authz;
+import main.java.RoleDecoder;
+import org.wildfly.security.authz.AuthorizationIdentity;
+import org.wildfly.security.authz.Roles;
 import javax.script.Invocable;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
@@ -37,14 +39,25 @@ class ScriptRoleDecoder implements RoleDecoder {
         jsEngine.eval(pathToJSFile);    //call the file using eval() method
         this.JSFunction = JSFunction;
     }
-    Roles decodeRoles(AuthorizationIdentity authorizationIdentity) throws ScriptException, NoSuchMethodException { //returns Roles object
-        return decodeRolesHelper(authorizationIdentity,roleMap);
-
+    public Roles decodeRoles(AuthorizationIdentity authorizationIdentity){ //returns Roles object
+        try {
+            return decodeRolesHelper(authorizationIdentity,roleMap);
+        } catch (ScriptException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
     Roles decodeRolesHelper(AuthorizationIdentity authorizationIdentity, HashMap<String, Set<String>> roleMap) throws ScriptException, NoSuchMethodException { //helper function to use custom method written in JS
         String attributeKey = authorizationIdentity.getAttributes().getFirst("department"); //key attribute corresponding to the desired attribute kind
-        return new Roles().fromSet(invocable.invokeFunction((JSFunction!=null) ? JSFunction : "returnSetOfRoles",attributeKey,roleMap));  //By default JS Function "returnSetOfRoles" will be used unless passed in while object creation
+        Set<String> setOfStrings =  (Set<String>) invocable.invokeFunction((JSFunction!=null) ? JSFunction : "returnSetOfRoles",attributeKey,roleMap); ////By default JS Function "returnSetOfRoles" will be used unless passed in while object creation
+        Roles decodedRoleSet = Roles.fromSet(setOfStrings);
+        return decodedRoleSet; 
     }
-
 }
+
+
+
+
 
