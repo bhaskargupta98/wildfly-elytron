@@ -21,8 +21,10 @@ package org.wildfly.security.script.engine;
 import org.junit.jupiter.api.Test;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.Attributes;
+import org.wildfly.security.authz.MapAttributes;
 import org.wildfly.security.authz.Roles;
 import javax.script.ScriptException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,7 +42,8 @@ class ScriptRoleDecoderTest {
             e.printStackTrace();
         }
     }
-    Attributes att = Attributes.EMPTY;
+    Set<String> ss = createSet("student","teacher","staff");
+    Attributes att = new MapAttributes(createMap("department",ss));
     AuthorizationIdentity authId = AuthorizationIdentity.basicIdentity(att);
     @Test
     public void testDefaultMethod() throws ScriptException, NoSuchMethodException {
@@ -60,6 +63,11 @@ class ScriptRoleDecoderTest {
         HashSet<String> set = new HashSet<>();
         for (String s : values) set.add(s);
         return set;
+    }
+    private HashMap<String,Set<String>> createMap(String key, Set<String> value){
+        HashMap<String,Set<String>> hashmap = new HashMap<>();
+        hashmap.put(key,value);
+        return hashmap;
     }
 
 }
