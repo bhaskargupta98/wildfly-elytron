@@ -18,47 +18,48 @@
  
 package org.wildfly.security.script.engine;
 
+import org.junit.jupiter.api.Test;
+import org.wildfly.security.authz.AuthorizationIdentity;
+import org.wildfly.security.authz.Attributes;
+import org.wildfly.security.authz.Roles;
 import javax.script.ScriptException;
-import javax.script.ScriptEngineManager;
-import javax.script.Invocable;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class ScriptEngine {
+class ScriptRoleDecoderTest {
+    String pathToJSFile="src//TestJSFile.js";
+    ScriptRoleDecoder obj1; //Using default method
+    ScriptRoleDecoder obj2; //Using myMethod present in JavaScript file
 
-    static ScriptEngineManager manager = new ScriptEngineManager();
-    static javax.script.ScriptEngine jsEngine = manager.getEngineByName("nashorn");
-    static Invocable invocable = (Invocable) jsEngine;
-    static Object result;
-    static {
+    {
         try {
-            result = jsEngine.eval(new FileReader("src//Name.js"));
+            obj1 = new ScriptRoleDecoder(pathToJSFile,null);
+            obj2 = new ScriptRoleDecoder(pathToJSFile,"myFunction");
         } catch (ScriptException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
     }
-    
-    private static Object returnSetFromMap (String keyRef, Map<String, Set<String>> roleSet) throws ScriptException, NoSuchMethodException {
-        return invocable.invokeFunction("returnSet",keyRef,roleSet);
+    Attributes att = Attributes.EMPTY;
+    AuthorizationIdentity authId = AuthorizationIdentity.basicIdentity(att);
+    @Test
+    public void testDefaultMethod() throws ScriptException, NoSuchMethodException {
+        obj1.roleMap.put("student",createSet("gate","class","room"));
+        Roles checkRole = Roles.fromSet(createSet("gate","class","room"));
+        Roles roleDefault = obj1.decodeRolesHelper(authId,obj1.roleMap);
+        assertEquals(checkRole,roleDefault);
     }
-    
-    public static boolean TestRoleDecoder() throws Exception {
-        Set<String> s1 = new HashSet<>();
-        s1.add("chd");
-        s1.add("ldh");
-        Set<String> s2 = new HashSet<>();
-        s2.add("bhaskar");
-        s2.add("adi");
-        Map<String, Set<String>> roleMap = new HashMap<>();
-        roleMap.put("city",s1);
-        roleMap.put("name",s2);
-        Set<String> ans = (Set<String>) returnSetFromMap("name",roleMap);
-        return ans == s2;
+    @Test
+    public void testMyMethod() throws ScriptException, NoSuchMethodException {
+        obj2.roleMap.put("student",createSet("gate","class","room"));
+        Roles checkRole = Roles.fromSet(createSet("gate","class","room"));
+        Roles roleDefault = obj2.decodeRolesHelper(authId,obj2.roleMap);
+        assertEquals(checkRole,roleDefault);
     }
+    private Set<String> createSet(String... values) {
+        HashSet<String> set = new HashSet<>();
+        for (String s : values) set.add(s);
+        return set;
+    }
+
 }
