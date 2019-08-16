@@ -59,7 +59,8 @@ public class ScriptRoleDecoder implements RoleDecoder {
 
     }
     private Roles decodeRolesHelper(AuthorizationIdentity authorizationIdentity) throws ScriptException, NoSuchMethodException { //helper function to use custom method written in JS
-        String attributeKey = authorizationIdentity.getAttributes().getFirst("department"); //key attribute corresponding to the desired attribute kind
+        String attribute = (String) invocable.invokeFunction("returnAttribute");
+        String attributeKey = authorizationIdentity.getAttributes().getFirst(attribute); //key attribute corresponding to the desired attribute kind
         Set<String> setOfStrings =  (Set<String>) invocable.invokeFunction((jsFunction!=null) ? jsFunction : "returnSetOfRoles",attributeKey); ////By default JS Function "returnSetOfRoles" will be used unless passed in while object creation
         Roles decodedRoleSet = Roles.fromSet(setOfStrings);
         return decodedRoleSet;
