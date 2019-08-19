@@ -17,31 +17,56 @@
  */
 
 package org.wildfly.security.script.engine;
-import org.wildfly.security.authz;
+import main.java.RoleDecoder;
+import org.wildfly.security.authz.AuthorizationIdentity;
+import org.wildfly.security.authz.Roles;
 import javax.script.Invocable;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 public class ScriptRoleDecoder implements RoleDecoder {
-    ScriptEngineManager manager  = new ScriptEngineManager();
-    javax.script.ScriptEngine jsEngine = manager.getEngineByName("nashorn");
-    Invocable invocable = (Invocable) jsEngine;
-    String pathToJSFile;
-    HashMap<String, Set<String>> roleMap;
-    ScriptRoleDecoder(String pathToJSFile) throws ScriptException { //path to JS file to be specified while object creation
-        roleMap = new HashMap<>();  //populate the HashMap beforehand as required
-        this.pathToJSFile = pathToJSFile;
-        jsEngine.eval(pathToJSFile);    //call the file using eval() method
+    private ScriptEngineManager manager;
+    private javax.script.ScriptEngine jsEngine;
+    private Invocable invocable;
+    private String pathToJSFile;
+    private String jsFunction;
+    public ScriptRoleDecoder(){
+        manager  = new ScriptEngineManager();
+        jsEngine = manager.getEngineByName("nashorn");
+        invocable = (Invocable) jsEngine;
     }
-    Roles decodeRoles(AuthorizationIdentity authorizationIdentity) throws ScriptException, NoSuchMethodException { //returns Roles object
-        return decodeRolesHelper(authorizationIdentity,roleMap);
+    public void initialize(Map<String, String> configuration) throws ScriptException {
+        for(Map.Entry<String,String> entrySet : configuration.entrySet()){
+            pathToJSFile = entrySet.getKey();
+            jsEngine.eval(pathToJSFile);
+            jsFunction = entrySet.getValue();
+
+        }
 
     }
-    Roles decodeRolesHelper(AuthorizationIdentity authorizationIdentity, HashMap<String, Set<String>> roleMap) throws ScriptException, NoSuchMethodException { //helper function to use custom method written in JS
-        String attributeKey = authorizationIdentity.getAttributes().getFirst("department"); //key attribute corresponding to the desired attribute kind
-        return new Roles().fromSet(invocable.invokeFunction("returnSetOfRoles",attributeKey,roleMap)); //JS method by the name "returnSetOfRoles" has to be present in the file taking arguments as a String and Java Map.
-    }
+    public Roles decodeRoles(AuthorizationIdentity authorizationIdentity){ //returns Roles object
 
+        try {
+            return decodeRolesHelper(authorizationIdentity);
+        } catch (ScriptException e) {
+            throw new RuntimeException();
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException();
+        }
+
+
+    }
+    private Roles decodeRolesHelper(AuthorizationIdentity authorizationIdentity) throws ScriptException, NoSuchMethodException { //helper function to use custom method written in JS
+        String attribute = (String) invocable.invokeFunction("returnAttribute");
+        String attributeKey = authorizationIdentity.getAttributes().getFirst(attribute); //key attribute corresponding to the desired attribute kind
+        Set<String> setOfStrings =  (Set<String>) invocable.invokeFunction((jsFunction!=null) ? jsFunction : "returnSetOfRoles",attributeKey); ////By default JS Function "returnSetOfRoles" will be used unless passed in while object creation
+        Roles decodedRoleSet = Roles.fromSet(setOfStrings);
+        return decodedRoleSet;
+    }
 }
+
+
+
+
