@@ -30,35 +30,26 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ScriptRoleDecoderTest {
-    String pathToJSFile="src//TestJSFile.js";
-    ScriptRoleDecoder obj1; //Using default method
-    ScriptRoleDecoder obj2; //Using myMethod present in JavaScript file
-
-    {
-        try {
-            obj1 = new ScriptRoleDecoder(pathToJSFile,null);
-            obj2 = new ScriptRoleDecoder(pathToJSFile,"myFunction");
-        } catch (ScriptException e) {
-            e.printStackTrace();
-        }
+    static HashMap<String,String> configuration = new HashMap<>();
+    static{
+        configuration.put("pathToJSFile","src//TestJSFile.js");
+        configuration.put("jsFunction","myFunction");
+        configuration.put("attribute","department");
     }
+    
+    ScriptRoleDecoder obj = new ScriptRoleDecoder();
     Set<String> ss = createSet("student","teacher","staff");
     Attributes att = new MapAttributes(createMap("department",ss));
     AuthorizationIdentity authId = AuthorizationIdentity.basicIdentity(att);
+    
     @Test
-    public void testDefaultMethod() throws ScriptException, NoSuchMethodException {
-        obj1.roleMap.put("student",createSet("gate","class","room"));
+    public void testMe() throws ScriptException {
+        obj.initialize(configuration);
         Roles checkRole = Roles.fromSet(createSet("gate","class","room"));
-        Roles roleDefault = obj1.decodeRolesHelper(authId,obj1.roleMap);
+        Roles roleDefault = obj.decodeRoles(authId);
         assertEquals(checkRole,roleDefault);
     }
-    @Test
-    public void testMyMethod() throws ScriptException, NoSuchMethodException {
-        obj2.roleMap.put("student",createSet("gate","class","room"));
-        Roles checkRole = Roles.fromSet(createSet("gate","class","room"));
-        Roles roleDefault = obj2.decodeRolesHelper(authId,obj2.roleMap);
-        assertEquals(checkRole,roleDefault);
-    }
+    
     private Set<String> createSet(String... values) {
         HashSet<String> set = new HashSet<>();
         for (String s : values) set.add(s);
@@ -69,5 +60,4 @@ class ScriptRoleDecoderTest {
         hashmap.put(key,value);
         return hashmap;
     }
-
 }
