@@ -47,12 +47,15 @@ public class ScriptRoleDecoder implements RoleDecoder {
     }
     public void initialize(Map<String, String> configuration) throws ScriptException {
         pathToJSFile = configuration.get("pathToJSFile");
-        jsEngine.eval(pathToJSFile);
+        if(pathToJSFile == null){
+            throw new IllegalArgumentException("pathToJSFile cannot be null");
+        }
         jsFunction = configuration.get("jsFunction");
         attribute = configuration.get("attribute");
-        if(pathToJSFile.equals(null) || attribute.equals(null)){
-            throw new IllegalArgumentException();
+        if(attribute == null){
+            throw new IllegalArgumentException("attribute cannot be null");
         }
+        jsEngine.eval(pathToJSFile);
     }
     public Roles decodeRoles(AuthorizationIdentity authorizationIdentity){ //returns Roles object
         try {
