@@ -38,10 +38,10 @@ public class ScriptRoleDecoder implements RoleDecoder {
         invocable = (Invocable) jsEngine;
     }
     public void initialize(Map<String, String> configuration) throws ScriptException {
-        for(Map.Entry<String,String> entrySet : configuration.entrySet()){
-            pathToJSFile = entrySet.getKey();
+        
+            pathToJSFile = configuration.get("pathToJSFile");
             jsEngine.eval(pathToJSFile);
-            jsFunction = entrySet.getValue();
+            jsFunction = configuration.get("jsFunction);
 
         }
 
