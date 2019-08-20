@@ -50,14 +50,17 @@ public class ScriptRoleDecoder implements RoleDecoder {
         jsEngine.eval(pathToJSFile);
         jsFunction = configuration.get("jsFunction");
         attribute = configuration.get("attribute");
+        if(pathToJSFile.equals(null) || attribute.equals(null)){
+            throw new IllegalArgumentException();
+        }
     }
     public Roles decodeRoles(AuthorizationIdentity authorizationIdentity){ //returns Roles object
         try {
             return decodeRolesHelper(authorizationIdentity);
         } catch (ScriptException e) {
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         } catch (NoSuchMethodException e) {
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         }
     }
     private Roles decodeRolesHelper(AuthorizationIdentity authorizationIdentity) throws ScriptException, NoSuchMethodException { //helper function to use custom method written in JS
@@ -68,5 +71,4 @@ public class ScriptRoleDecoder implements RoleDecoder {
         return decodedRoleSet;
     }
 }
-
 
