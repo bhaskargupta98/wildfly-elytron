@@ -41,7 +41,7 @@ public class ScriptRoleDecoder implements RoleDecoder {
         
             pathToJSFile = configuration.get("pathToJSFile");
             jsEngine.eval(pathToJSFile);
-            jsFunction = configuration.get("jsFunction);
+            jsFunction = configuration.get("jsFunction");
 
         }
 
