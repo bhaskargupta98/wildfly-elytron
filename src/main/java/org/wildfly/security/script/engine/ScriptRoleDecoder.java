@@ -25,6 +25,13 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
+
+/**
+ * Adds support for scripting to RoleDecoder.
+ *
+ * @author <a href="mailto:guptab3@gmail.com">Bhaskar Gupta</a>
+ */
 
 public class ScriptRoleDecoder implements RoleDecoder {
     private ScriptEngineManager manager;
@@ -32,15 +39,17 @@ public class ScriptRoleDecoder implements RoleDecoder {
     private Invocable invocable;
     private String pathToJSFile;
     private String jsFunction;
+    private String attribute;
     public ScriptRoleDecoder(){
         manager  = new ScriptEngineManager();
         jsEngine = manager.getEngineByName("nashorn");
         invocable = (Invocable) jsEngine;
     }
     public void initialize(Map<String, String> configuration) throws ScriptException {
-            pathToJSFile = configuration.get("pathToJSFile");
-            jsEngine.eval(pathToJSFile);
-            jsFunction = configuration.get("jsFunction");
+        pathToJSFile = configuration.get("pathToJSFile");
+        jsEngine.eval(pathToJSFile);
+        jsFunction = configuration.get("jsFunction");
+        attribute = configuration.get("attribute");
     }
     public Roles decodeRoles(AuthorizationIdentity authorizationIdentity){ //returns Roles object
         try {
@@ -52,14 +61,12 @@ public class ScriptRoleDecoder implements RoleDecoder {
         }
     }
     private Roles decodeRolesHelper(AuthorizationIdentity authorizationIdentity) throws ScriptException, NoSuchMethodException { //helper function to use custom method written in JS
-        String attribute = (String) invocable.invokeFunction("returnAttribute");
-        String attributeKey = authorizationIdentity.getAttributes().getFirst(attribute); //key attribute corresponding to the desired attribute kind
-        Set<String> setOfStrings =  (Set<String>) invocable.invokeFunction((jsFunction!=null) ? jsFunction : "returnSetOfRoles",attributeKey); ////By default JS Function "returnSetOfRoles" will be used unless passed in while object creation
+        List<String> myStrings = authorizationIdentity.getAttributes().get(attribute);
+        String[] attributeValues = myStrings.toArray(new String[myStrings.size()]);
+        Set<String> setOfStrings =  (Set<String>) invocable.invokeFunction((jsFunction!=null) ? jsFunction : "returnSetOfRoles",attributeValues); ////By default JS Function "returnSetOfRoles" will be used unless passed in while object creation
         Roles decodedRoleSet = Roles.fromSet(setOfStrings);
         return decodedRoleSet;
     }
 }
-
-
 
 
